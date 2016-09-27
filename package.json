@@ -1,7 +1,7 @@
 {
-  "name": "webaudio-chnl",
-  "version": "0.0.2",
-  "description": "Chnl - one channel, all effects.",
+  "name": "audiochnl",
+  "version": "0.0.1",
+  "description": "AudioChnl - One Audio object, multiple effects. Easy.",
   "main": "build/bundle.js",
   "scripts": {
     "start:dev": "webpack-dev-server",
@@ -28,11 +28,8 @@
     "worker-loader": "*",
     "file-loader": "*"
   },
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
   "dependencies": {
+    "webaudio-chnl": "0.0.2",
     "webaudio-effect-units-collection": "0.0.3"
   }
 }
