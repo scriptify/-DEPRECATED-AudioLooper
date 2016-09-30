@@ -29,7 +29,6 @@
     "file-loader": "*"
   },
   "dependencies": {
-    "webaudio-chnl": "0.0.2",
-    "webaudio-effect-units-collection": "0.0.3"
+    "webaudio-chnl": "0.0.2"
   }
 }
