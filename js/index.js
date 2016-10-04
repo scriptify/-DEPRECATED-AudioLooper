@@ -1,5 +1,4 @@
 import SyncWorker from './syncing.worker';
-import drum from './drum.wav';
 
 import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK } from './constants.js';
 
@@ -56,7 +55,7 @@ export default class AudioLooper {
 
 }
 
-const audioObj = new Audio(drum);
+/*const audioObj = new Audio(drum);
 
 audioObj.addEventListener('loadedmetadata', e => {
   const onPlay = id => {
@@ -75,4 +74,4 @@ audioObj.addEventListener('loadedmetadata', e => {
     id: 34,
     duration: audioObj.duration
   });
-});
+});*/
