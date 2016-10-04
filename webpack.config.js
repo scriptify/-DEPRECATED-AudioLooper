@@ -31,10 +31,15 @@ const COMMON_CONFIGURATION = {
        include: PATHS.js
      },
      {
-        test: /\.(jpe?g|png|gif|svg|mp3)$/i,
+        test: /\.(jpe?g|png|gif|svg|mp3|wav)$/i,
         loaders: [
             'file?hash=sha512&digest=hex&name=[hash].[ext]'
         ],
+        include: PATHS.js
+      },
+      {
+        test: /\.worker.js$/,
+        loaders: ['worker', 'babel?cacheDirectory'],
         include: PATHS.js
       }
     ]
