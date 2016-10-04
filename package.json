@@ -28,7 +28,6 @@
     "file-loader": "*"
   },
   "dependencies": {
-    "inline-worker": "^1.1.0",
     "worker-loader": "^0.7.1"
   }
 }

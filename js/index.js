@@ -18,6 +18,10 @@ export default class AudioLooper {
   bootstrap() {
 
     this.worker = new SyncWorker();
+    // This keeps the worker from terminating, when e.g. the user changes the tab etc.
+    setInterval(() => {
+      this.worker.postMessage('do not sleep');
+    }, 300);
     this.worker.addEventListener('message', ({ data }) => this.onWorkerMessage(data));
 
   }
