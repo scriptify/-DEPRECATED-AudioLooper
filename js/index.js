@@ -1,4 +1,4 @@
-import SyncWorker from './syncing.worker';
+import createSyncWorker from './syncing';
 
 import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC } from './constants.js';
 
@@ -15,7 +15,7 @@ export default class AudioLooper {
   }
 
   bootstrap() {
-    this.worker = new SyncWorker();
+    this.worker = createSyncWorker();
     // This keeps the worker from terminating, when e.g. the user changes the tab etc.
     /*setInterval(() => {
       this.worker.postMessage('do not sleep');
@@ -220,4 +220,5 @@ function render(recordy, audioCtx) {
   mainDiv.appendChild(alertDiv);
 
   document.querySelector('#app').appendChild(mainDiv);
-}*/
+}
+*/

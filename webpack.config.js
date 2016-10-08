@@ -19,9 +19,7 @@ const COMMON_CONFIGURATION = {
   },
   output: {
     path: PATHS.build,
-    filename: 'bundle.js',
-    libraryTarget: 'umd',
-    library: 'EffectUnit'
+    filename: 'bundle.js'
   },
   module: {
     loaders: [
@@ -35,11 +33,6 @@ const COMMON_CONFIGURATION = {
         loaders: [
             'file?hash=sha512&digest=hex&name=[hash].[ext]'
         ],
-        include: PATHS.js
-      },
-      {
-        test: /\.worker.js$/,
-        loaders: ['worker', 'babel?cacheDirectory'],
         include: PATHS.js
       }
     ]
