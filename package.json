@@ -28,6 +28,8 @@
     "file-loader": "*"
   },
   "dependencies": {
+    "audiochnl": "file:///home/maximilian/DEV/AudioChnl",
+    "recordy": "file:///home/maximilian/DEV/Recordy",
     "worker-loader": "^0.7.1"
   }
 }

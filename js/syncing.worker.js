@@ -1,14 +1,16 @@
-import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK } from './constants.js';
+import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC } from './constants.js';
+
+let tracks = [];
 
 const loop = fn => {
   // Same like setInterval, but with the passed time since last interval as 1° argument
-  let currTime = Date.now();
+  let currTime = performance.now();
   let timePlayed = 0;
 
 
   setInterval(() => {
 
-    const newTime = Date.now();
+    const newTime = performance.now();
     const diff = newTime - currTime;
     currTime = newTime;
     fn(diff);
@@ -16,29 +18,26 @@ const loop = fn => {
   }, 0);
 };
 
-let tracks = [];
-
-const algorithm = (tracks, playTrack, alreadyPlayed = []) => {
+const algorithm = (tracks, playTrack, lastPlayed = -1) => {
   const firstTrack = tracks.find(track => track.isFirstTrack);
-  const num = Math.round(firstTrack.currentPercentualTime * 100) / 100;
 
-  if( Number.isInteger( num ) && !alreadyPlayed.includes(num) ) {
+  if((lastPlayed + 1) < firstTrack.currentPercentualTime) {
+    //console.log(firstTrack.currentPercentualTime);
+    lastPlayed = lastPlayed + 1;
     tracks.forEach(track => {
-      //console.log(`${num} % ${track.maxPercentualTime} = ${num % track.maxPercentualTime}, ${firstTrack.currentPercentualTime}`)
-      //console.log(`${num} % ${track.maxPercentualTime} = ${num % track.maxPercentualTime === 0}`)
-      if(num % track.maxPercentualTime === 0 && track.shouldPlay) {
+      if(lastPlayed % track.maxPercentualTime === 0 && track.shouldPlay) {
         playTrack(track.id);
       }
     });
   }
 
-  return num;
+  return lastPlayed;
 
 };
 
 function syncTracks(tracks, onPlay) {
 
-  let alreadyPlayed = [];
+  let lastPlayed = undefined;
 
   loop(timePassed => {
 
@@ -47,7 +46,7 @@ function syncTracks(tracks, onPlay) {
       return;
     // Add percentage to firstTrackPercentage
     firstTrack.currentPercentualTime +=  (timePassed / 1000) / firstTrack.duration;
-    alreadyPlayed.push( algorithm(tracks, onPlay, alreadyPlayed) );
+    lastPlayed = algorithm(tracks, onPlay, lastPlayed);
 
   });
 
@@ -59,7 +58,7 @@ function addTrack(tracks, duration, id) {
 
   if(!isFirstTrack) {
     const firstTrack = tracks.find(track => track.isFirstTrack);
-    maxPercentualTime = Math.ceil((firstTrack.duration / 100) * duration);
+    maxPercentualTime = Math.ceil(duration / firstTrack.duration);
   }
 
   tracks.push({
@@ -72,10 +71,14 @@ function addTrack(tracks, duration, id) {
   });
 }
 
-self.addEventListener('message', ({ data: { type, id, duration } }) => {
+self.addEventListener('message', ({ data: { type, payload } }) => {
+
+  const { id } = payload;
+
   switch(type) {
 
     case ADD_TRACK:
+      const { duration } = payload;
       addTrack(tracks, duration, id);
     break;
 
@@ -93,9 +96,19 @@ self.addEventListener('message', ({ data: { type, id, duration } }) => {
       playTrack.shouldPlay = false;
       self.postMessage({ type: STOP, id })
     break;
+
+    case SYNC:
+      // Sync message from ui Thread -> Sync first track with the REAL currentTime
+      const currentTime = payload;
+      const firstTrack = tracks.find(track => track.isFirstTrack);
+      // Update value
+      // Always add the difference of the percentual progress of the real track and the actual percentual progress of the track
+      firstTrack.currentPercentualTime += (currentTime / firstTrack.duration) - (firstTrack.currentPercentualTime - Math.floor( firstTrack.currentPercentualTime ));
+    break;
+
   }
 });
 
 syncTracks(tracks, id => {
-  self.postMessage({ type: PLAY, id });
+  self.postMessage(JSON.stringify({ type: PLAY, id }));
 });
