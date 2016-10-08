@@ -5,7 +5,7 @@ merge = require('webpack-merge'); // Merge together configurations!
 
 const PATHS = {
   js: path.join(__dirname, './js/'),
-  build: path.join(__dirname, './build')
+  build: path.join(__dirname, './build/')
 };
 
 const TARGET = process.env.npm_lifecycle_event;
@@ -19,7 +19,9 @@ const COMMON_CONFIGURATION = {
   },
   output: {
     path: PATHS.build,
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    libraryTarget: 'umd',
+    library: 'AudioLooper'
   },
   module: {
     loaders: [
