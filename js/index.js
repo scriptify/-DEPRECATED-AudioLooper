@@ -1,6 +1,6 @@
 import createSyncWorker from './syncing';
 
-import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC, FIRST_SYNC } from './constants.js';
+import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC } from './constants.js';
 
 export default class AudioLooper {
 
@@ -8,10 +8,9 @@ export default class AudioLooper {
   onPlay;
   onStop;
 
-  constructor(onPlay, onStop, onFirstSync = () => {}) {
+  constructor(onPlay, onStop) {
     this.onPlay = onPlay;
     this.onStop = onStop;
-    this.onFirstSync = onFirstSync;
     this.bootstrap();
   }
 
@@ -29,10 +28,6 @@ export default class AudioLooper {
 
       case STOP:
         this.onStop(id);
-      break;
-
-      case FIRST_SYNC:
-        this.onFirstSync(id, payload);
       break;
     }
   }
@@ -176,17 +171,9 @@ function render(recordy, audioCtx) {
 
   const onStop = id => {
     tracks.find(track => track.id === id).chnl.pause();
-  }
-
-  const onFirstSync = (id, time) => {
-    // Now we have time in seconds => seek!
-    //console.log(`First sync for ${id} at ${time}`);
-    const chnl = tracks.find(track => track.id === id).chnl;
-    chnl.seek(time);
-    chnl.start();
   };
-
-  const looper = new AudioLooper(onPlay, onStop, onFirstSync);
+  
+  const looper = new AudioLooper(onPlay, onStop);
 
 
   const mainDiv = document.createElement('div');
@@ -214,7 +201,7 @@ function render(recordy, audioCtx) {
             id: ++id,
             chnl: audioChnl
           });
-;
+
           looper.addTrack({
             id,
             duration: audio.duration

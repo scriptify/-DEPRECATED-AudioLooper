@@ -14,7 +14,6 @@ function createSyncer() {
   const STOP = 'STOP';
   const REMOVE_TRACK = 'REMOVE_TRACK';
   const SYNC = 'SYNC';
-  const FIRST_SYNC = 'FIRST_SYNC';
 
 
   const post = obj => {
@@ -68,25 +67,6 @@ function createSyncer() {
       // Add percentage to firstTrackPercentage
       firstTrack.currentPercentualTime +=  (timePassed / 1000) / firstTrack.duration;
 
-      // Make first sync here: Look if there are any tracks which weren't synced once
-      tracks.forEach(track => {
-        if(!track.firstSync && track !== firstTrack) {
-          const floored = Math.floor( firstTrack.currentPercentualTime );
-          let percVal = firstTrack.currentPercentualTime;
-          if(floored >= track.maxPercentualTime) {
-            percVal = (track.maxPercentualTime - 1) + (firstTrack.currentPercentualTime - floored);
-          }
-
-          const numVal = firstTrack.duration * percVal;
-          console.log(`PercVal: ${percVal} || NumVal: ${numVal} || Track duration: ${track.duration}`);
-          if(numVal <= track.duration) { // So if the actual position where it should be played now (according to the sync) is greater than the duration of the same, of course it's not played; But it will be played with the algorithm;
-            post({ type: FIRST_SYNC, id: track.id, payload: numVal });
-          }
-
-          track.firstSync = true;
-        }
-      });
-
       lastPlayed = algorithm(tracks, onPlay, lastPlayed);
 
     });
@@ -108,8 +88,7 @@ function createSyncer() {
       isFirstTrack,
       shouldPlay: true,
       currentPercentualTime: 0, // Only relevant for first track
-      maxPercentualTime,
-      firstSync: true // Determine if the FIRST_SYNC method was executed once in the main thread (to sync new tracks so that they can be directly played)
+      maxPercentualTime
     });
   }
 
