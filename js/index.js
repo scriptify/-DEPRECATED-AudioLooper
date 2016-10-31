@@ -1,6 +1,6 @@
 import createSyncWorker from './syncing';
 
-import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC } from './constants.js';
+import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC, FIRST_SYNC } from './constants.js';
 
 export default class AudioLooper {
 
@@ -8,22 +8,20 @@ export default class AudioLooper {
   onPlay;
   onStop;
 
-  constructor(onPlay, onStop) {
+  constructor(onPlay, onStop, onFirstSync = () => {}) {
     this.onPlay = onPlay;
     this.onStop = onStop;
+    this.onFirstSync = onFirstSync;
     this.bootstrap();
   }
 
   bootstrap() {
     this.worker = createSyncWorker();
-    // This keeps the worker from terminating, when e.g. the user changes the tab etc.
-    /*setInterval(() => {
-      this.worker.postMessage('do not sleep');
-    }, 300);*/
+
     this.worker.addEventListener('message', ({ data }) => this.onWorkerMessage(JSON.parse(data)));
   }
 
-  onWorkerMessage({ type, id }) {
+  onWorkerMessage({ type, id, payload = 0 }) {
     switch(type) {
       case PLAY:
         this.onPlay(id);
@@ -32,31 +30,39 @@ export default class AudioLooper {
       case STOP:
         this.onStop(id);
       break;
+
+      case FIRST_SYNC:
+        this.onFirstSync(id, payload);
+      break;
     }
   }
 
   addTrack({ id, duration }) {
-    this.worker.postMessage({ type: ADD_TRACK, payload: { id, duration } });
+    this.post({ type: ADD_TRACK, payload: { id, duration } });
   }
 
   removeTrack({ id }) {
-    this.worker.postMessage({ type: REMOVE_TRACK, payload: { id } });
+    this.post({ type: REMOVE_TRACK, payload: { id } });
   }
 
   play({ id }) {
-    this.worker.postMessage({ type: PLAY, payload: { id } });
+    this.post({ type: PLAY, payload: { id } });
   }
 
   stop({ id }) {
-    this.worker.postMessage({ type: STOP, payload: { id } });
+    this.post({ type: STOP, payload: { id } });
   }
 
   syncFirstTrack(audioObj) {
     // You can manually sync with the first track by passing the current time of it to the worker
     // Idealy, ou get higher accuracy by doing this
     setInterval(() => {
-      this.worker.postMessage({ type: SYNC, payload: audioObj.currentTime })
+      this.post({ type: SYNC, payload: audioObj.currentTime })
     }, 300)
+  }
+
+  post(obj) {
+    this.worker.postMessage( JSON.stringify(obj) );
   }
 
 }
@@ -114,7 +120,7 @@ benchmark(0.5, 10)
 */
 
 // Simple Loopstation:
-/*
+
 const average = data => data.reduce((pre, curr) => pre + curr) / data.length;
 
 import Recordy from 'recordy';
@@ -163,8 +169,8 @@ function render(recordy, audioCtx) {
     const logNum = measurements[measurements.length - 1];
 
     const audio = tracks.find(track => track.id === id).chnl;
-    console.log(Math.abs( audio.audioObj.duration - audio.audioObj.currentTime ) * 1000);
-
+    //  console.log(Math.abs( audio.audioObj.duration - audio.audioObj.currentTime ) * 1000);
+    audio.seek(0);
     audio.start();
   }
 
@@ -172,7 +178,15 @@ function render(recordy, audioCtx) {
     tracks.find(track => track.id === id).chnl.pause();
   }
 
-  const looper = new AudioLooper(onPlay, onStop);
+  const onFirstSync = (id, time) => {
+    // Now we have time in seconds => seek!
+    //console.log(`First sync for ${id} at ${time}`);
+    const chnl = tracks.find(track => track.id === id).chnl;
+    chnl.seek(time);
+    chnl.start();
+  };
+
+  const looper = new AudioLooper(onPlay, onStop, onFirstSync);
 
 
   const mainDiv = document.createElement('div');
@@ -194,12 +208,13 @@ function render(recordy, audioCtx) {
 
         const audioChnl = new AudioChnl(audioCtx, audio, () => {
         audioChnl.connect(audioCtx.destination);
+        audioChnl.effects.delay.enable();
 
           tracks.push({
             id: ++id,
             chnl: audioChnl
           });
-
+;
           looper.addTrack({
             id,
             duration: audio.duration
@@ -221,4 +236,3 @@ function render(recordy, audioCtx) {
 
   document.querySelector('#app').appendChild(mainDiv);
 }
-*/

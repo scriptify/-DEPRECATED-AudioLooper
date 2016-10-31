@@ -25,5 +25,8 @@
     "webpack": "*",
     "webpack-dev-server": "*",
     "webpack-merge": "*"
+  },
+  "dependencies": {
+    "audiochnl": "0.0.5"
   }
 }

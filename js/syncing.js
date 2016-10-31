@@ -1,4 +1,4 @@
-import InlineWorker from 'inline-worker';
+  import InlineWorker from 'inline-worker';
 
 export default function createSyncWorker() {
   return new InlineWorker( createSyncer );
@@ -7,15 +7,19 @@ export default function createSyncWorker() {
 function createSyncer() {
 
   // No webpack imports possible in the inline worker function
-  // TODO: Fix this by forking the inline-worker repo
+  // TODO: Fix this by forking the inline-worker repo and fixing it!
 
   const ADD_TRACK = 'ADD_TRACK';
   const PLAY = 'PLAY';
   const STOP = 'STOP';
   const REMOVE_TRACK = 'REMOVE_TRACK';
   const SYNC = 'SYNC';
+  const FIRST_SYNC = 'FIRST_SYNC';
 
 
+  const post = obj => {
+    self.postMessage(JSON.stringify(obj));
+  };
 
   let tracks = [];
 
@@ -63,6 +67,26 @@ function createSyncer() {
         return;
       // Add percentage to firstTrackPercentage
       firstTrack.currentPercentualTime +=  (timePassed / 1000) / firstTrack.duration;
+
+      // Make first sync here: Look if there are any tracks which weren't synced once
+      tracks.forEach(track => {
+        if(!track.firstSync && track !== firstTrack) {
+          const floored = Math.floor( firstTrack.currentPercentualTime );
+          let percVal = firstTrack.currentPercentualTime;
+          if(floored >= track.maxPercentualTime) {
+            percVal = (track.maxPercentualTime - 1) + (firstTrack.currentPercentualTime - floored);
+          }
+
+          const numVal = firstTrack.duration * percVal;
+          console.log(`PercVal: ${percVal} || NumVal: ${numVal} || Track duration: ${track.duration}`);
+          if(numVal <= track.duration) { // So if the actual position where it should be played now (according to the sync) is greater than the duration of the same, of course it's not played; But it will be played with the algorithm;
+            post({ type: FIRST_SYNC, id: track.id, payload: numVal });
+          }
+
+          track.firstSync = true;
+        }
+      });
+
       lastPlayed = algorithm(tracks, onPlay, lastPlayed);
 
     });
@@ -84,11 +108,14 @@ function createSyncer() {
       isFirstTrack,
       shouldPlay: true,
       currentPercentualTime: 0, // Only relevant for first track
-      maxPercentualTime
+      maxPercentualTime,
+      firstSync: true // Determine if the FIRST_SYNC method was executed once in the main thread (to sync new tracks so that they can be directly played)
     });
   }
 
-  self.addEventListener('message', ({ data: { type, payload } }) => {
+  self.addEventListener('message', json => {
+
+    const { type, payload } = JSON.parse(json.data);
 
     const { id } = payload;
 
@@ -111,7 +138,7 @@ function createSyncer() {
       case STOP:
         const stopTrack = tracks.find(track => track.id === id);
         playTrack.shouldPlay = false;
-        self.postMessage({ type: STOP, id })
+        post({ type: STOP, id })
       break;
 
       case SYNC:
@@ -127,7 +154,7 @@ function createSyncer() {
   });
 
   syncTracks(tracks, id => {
-    self.postMessage(JSON.stringify({ type: PLAY, id }));
+    post({ type: PLAY, id });
   });
 
 }
