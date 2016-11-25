@@ -1,6 +1,6 @@
 {
   "name": "audiolooper",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "AudioLooper - Loop your tracks with automatic synchronization.",
   "main": "build/bundle.js",
   "scripts": {
@@ -31,6 +31,6 @@
     "url": "https://github.com/scriptify/audiolooper.git"
   },
   "dependencies": {
-    "audiochnl": "0.0.5"
+    "audiochnl": "0.0.6"
   }
 }
