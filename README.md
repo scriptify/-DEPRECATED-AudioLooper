@@ -64,7 +64,7 @@ The arguments are:
 ### Adding a track
 
 ```javascript
-.add( { id, duration } )
+.addTrack( { id, duration } )
 ```
 
 This method adds a track to the looper, so it can be processed by the algorithm.
