@@ -46,7 +46,6 @@ function createSyncer() {
       lastPlayed = lastPlayed + 1;
       tracks.forEach(track => {
         if(lastPlayed % track.maxPercentualTime === 0 && track.shouldPlay) {
-          console.log('play', track)
           playTrack(track.id);
         }
       });
