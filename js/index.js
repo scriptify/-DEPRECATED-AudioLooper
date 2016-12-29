@@ -62,9 +62,33 @@ export default class AudioLooper {
 
 }
 
+import drum from './drum.wav';
+
+const audio = new Audio();
+
+audio.addEventListener('canplay', e => {
+  const looper = new AudioLooper(id => {
+    //console.log('play');
+    //audio.play();
+  }, id => {
+    console.log('stop');
+  });
+
+  looper.addTrack({
+    id: 42,
+    duration: audio.duration
+  });
+
+  looper.syncFirstTrack(audio);
+});
+
+audio.src = drum;
+
+
+
 // Benchmark #1
-/*
-const benchmark = (n, times) => {
+
+/*const benchmark = (n, times) => {
 
   // n = seconds between tracks played
   // times = how many times to play a track
@@ -111,5 +135,4 @@ const benchmark = (n, times) => {
 benchmark(0.5, 10)
   .then(result => {
     console.log(result);
-  });
-*/
+  });*/

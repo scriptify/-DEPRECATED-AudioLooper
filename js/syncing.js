@@ -1,4 +1,4 @@
-  import InlineWorker from 'inline-worker';
+import InlineWorker from 'inline-worker';
 
 export default function createSyncWorker() {
   return new InlineWorker( createSyncer );
@@ -46,6 +46,7 @@ function createSyncer() {
       lastPlayed = lastPlayed + 1;
       tracks.forEach(track => {
         if(lastPlayed % track.maxPercentualTime === 0 && track.shouldPlay) {
+          console.log('play', track)
           playTrack(track.id);
         }
       });
@@ -62,6 +63,7 @@ function createSyncer() {
     loop(timePassed => {
 
       const firstTrack = tracks.find(track => track.isFirstTrack);
+
       if(!firstTrack)
         return;
       // Add percentage to firstTrackPercentage

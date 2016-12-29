@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "audiochnl": "*",
+    "file-loader": "^0.9.0",
     "inline-worker": "^1.1.0"
   }
 }
