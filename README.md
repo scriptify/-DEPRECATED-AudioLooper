@@ -79,7 +79,7 @@ It takes on argument, an object with two properties:
 ### Removing a track
 
 ```javascript
-.remove( { id } )
+.removeTrack( { id } )
 ```
 
 This methods removes the track from the looper: So it won't be processed again by the looper. __NOTE:__ It doesn't remove your _real_ track, so you have to remove it by yourself and let the garbage collector do the rest.
@@ -105,6 +105,13 @@ This method prevents a track to be looped again. __NOTE:__ This doesn't mean tha
 
 It takes one argument, an object with one property:
 - _id:_ The id of the track you want to prevent from being looped. You determined this before when you added the track.
+
+### Disposing the looper
+If you don't need the looper anymore, you should consider disposing it, otherwise the thread will keep running in the background. To do so, just call:
+
+```javascript
+.dispose()
+```
 
 ### Syncing the _virtual_ first track with _real_ first track
 

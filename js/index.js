@@ -60,35 +60,11 @@ export default class AudioLooper {
     this.worker.postMessage( JSON.stringify(obj) );
   }
 
+  dispose() {
+    this.woker.terminate();
+  }
+
 }
-
-import drum from './drum.wav';
-import AudioChnl from 'audiochnl';
-
-const audio = new Audio();
-const audioCtx = new AudioContext();
-
-audio.addEventListener('loadeddata', e => {
-
-  const audioChnl = new AudioChnl(audioCtx, audio);
-  audioChnl.connect(audioCtx.destination);
-
-  const looper = new AudioLooper(id => {
-    console.log('play');
-    audioChnl.start();
-  }, id => {
-    console.log('stop');
-  });
-
-  looper.addTrack({
-    id: 42,
-    duration: audioChnl.audioObj.duration
-  });
-
-  looper.syncFirstTrack(audioChnl.audioObj);
-});
-
-audio.src = drum;
 
 
 
