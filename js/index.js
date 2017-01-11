@@ -1,12 +1,13 @@
 import createSyncWorker from './syncing';
 
-import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC } from './constants.js';
+import { ADD_TRACK, PLAY, STOP, REMOVE_TRACK, SYNC, CLEAR_SYNC } from './constants.js';
 
 export default class AudioLooper {
 
   worker;
   onPlay;
   onStop;
+  syncInterval;
 
   constructor(onPlay, onStop) {
     this.onPlay = onPlay;
@@ -28,6 +29,10 @@ export default class AudioLooper {
 
       case STOP:
         this.onStop(id);
+      break;
+
+      case CLEAR_SYNC:
+        this.clearSync();
       break;
     }
   }
@@ -51,9 +56,13 @@ export default class AudioLooper {
   syncFirstTrack(audioObj) {
     // You can manually sync with the first track by passing the current time of it to the worker
     // Ideally, you get higher accuracy by doing this
-    setInterval(() => {
+    this.syncInterval = window.setInterval(() => {
       this.post({ type: SYNC, payload: audioObj.currentTime })
     }, 300)
+  }
+
+  clearSync() {
+    window.clearInterval( this.syncInterval );
   }
 
   post(obj) {
@@ -61,60 +70,119 @@ export default class AudioLooper {
   }
 
   dispose() {
-    this.woker.terminate();
+    this.worker.terminate();
   }
 
 }
 
 
 
-// Benchmark #1
+// Simple Loopstation:
 
-/*const benchmark = (n, times) => {
+const average = data => data.reduce((pre, curr) => pre + curr) / data.length;
 
-  // n = seconds between tracks played
-  // times = how many times to play a track
+import Recordy from 'recordy';
+import AudioChnl from 'audiochnl';
 
-  let count = 0;
-  let data = [];
+const audioCtx = new AudioContext();
+
+const recordy = new Recordy(audioCtx);
+
+recordy.getInput()
+  .then(hasInput => {
+    if(hasInput)
+      console.log('Got mic input!');
+    else
+      console.error('Could not get mic input.');
+  });
+
+render(recordy, audioCtx);
+
+function render(recordy, audioCtx) {
+
+
   let time1 = 0;
   let time2 = 0;
-  let hasBegan = false;
+  let measurements = [];
+  let tracks = [];
+  let id = 0;
+  let count = 0;
 
-  return new Promise((resolve, reject) => {
-    const onPlay = id => {
-      // Theoratically, this executes exactly every n second
-      if(hasBegan) {
-        time2 = performance.now();
-        data.push( (time2 - time1) / 100 );
-        time1 = time2;
-      }
+  const alertDiv = document.createElement('div');
 
-      hasBegan = true;
+  const alertText = text => {
+    const h1 = document.createElement('h1');
+    h1.textContent = text;
+    alertDiv.appendChild(h1);
+  }
 
-      if(count >= times) {
-        data.shift();
+  const onPlay = id => {
 
-        let average = data.reduce((pre, curr) => pre + curr) / data.length;
+    const firstDuration = tracks[0].chnl.audioObj.duration;
 
-        resolve({
-          data,
-          average
-        });
-      }
+    time2 = performance.now();
+    measurements.push( (time2 - time1) / 1000 )
+    time1 = time2;
 
-      count = count + 1;
-    };
-    const looper = new AudioLooper(onPlay, () => {});
+    const logNum = measurements[measurements.length - 1];
 
-    looper.addTrack({
-      id: 42,
-      duration: n
-    });
+    const audio = tracks.find(track => track.id === id).chnl;
+    //  console.log(Math.abs( audio.audioObj.duration - audio.audioObj.currentTime ) * 1000);
+    audio.seek(0);
+    audio.start();
+  }
+
+  const onStop = id => {
+    tracks.find(track => track.id === id).chnl.pause();
+  };
+
+  const looper = new AudioLooper(onPlay, onStop);
+
+
+  const mainDiv = document.createElement('div');
+  mainDiv.class = 'main';
+
+  const recordBtn = document.createElement('button');
+  const stopRecordBtn = document.createElement('button');
+
+  recordBtn.textContent = 'Start recording';
+  stopRecordBtn.textContent = 'Stop recording';
+
+  recordBtn.addEventListener('click', e => {
+    recordy.startRecording();
   });
-}
 
-benchmark(0.5, 10)
-  .then(result => {
-    console.log(result);
-  });*/
+  stopRecordBtn.addEventListener('click', e => {
+    recordy.stopRecording(true) // TRUE == Create audio object
+      .then(audio => {
+
+        const audioChnl = new AudioChnl(audioCtx, audio, () => {
+        audioChnl.connect(audioCtx.destination);
+        //audioChnl.effects.delay.enable();
+
+          tracks.push({
+            id: ++id,
+            chnl: audioChnl
+          });
+
+          looper.addTrack({
+            id,
+            duration: audio.duration
+          });
+
+          if(tracks.length === 1) {
+            // First track was added -> always send sync message to looper Thread
+            looper.syncFirstTrack( tracks[0].chnl.audioObj );
+          }
+
+      });
+
+      });
+  });
+
+  mainDiv.appendChild(recordBtn);
+  mainDiv.appendChild(stopRecordBtn);
+  mainDiv.appendChild(alertDiv);
+
+  document.querySelector('#app').appendChild(mainDiv);
+}

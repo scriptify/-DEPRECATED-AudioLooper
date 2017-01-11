@@ -14,6 +14,7 @@ function createSyncer() {
   const STOP = 'STOP';
   const REMOVE_TRACK = 'REMOVE_TRACK';
   const SYNC = 'SYNC';
+  const CLEAR_SYNC = 'CLEAR_SYNC';
 
 
   const post = obj => {
@@ -107,7 +108,11 @@ function createSyncer() {
       break;
 
       case REMOVE_TRACK:
-        tracks.splice( tracks.find(track => track.id === id), 1 );
+        const removeTrack = tracks.find(track => track.id === id);
+
+        if(removeTrack.isFirstTrack)
+          post({ type: CLEAR_SYNC });
+        tracks.splice( removeTrack, 1 );
       break;
 
       case PLAY:
@@ -117,7 +122,8 @@ function createSyncer() {
 
       case STOP:
         const stopTrack = tracks.find(track => track.id === id);
-        playTrack.shouldPlay = false;
+        stopTrack.shouldPlay = false;
+
         post({ type: STOP, id })
       break;
 
@@ -127,7 +133,8 @@ function createSyncer() {
         const firstTrack = tracks.find(track => track.isFirstTrack);
         // Update value
         // Always add the difference of the percentual progress of the real track and the actual percentual progress of the track
-        firstTrack.currentPercentualTime += (currentTime / firstTrack.duration) - (firstTrack.currentPercentualTime - Math.floor( firstTrack.currentPercentualTime ));
+        if(firstTrack)
+          firstTrack.currentPercentualTime += (currentTime / firstTrack.duration) - (firstTrack.currentPercentualTime - Math.floor( firstTrack.currentPercentualTime ));
       break;
 
     }
